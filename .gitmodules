@@ -1,0 +1,3 @@
+[submodule "user_interface"]
+	path = user_interface
+	url = https://github.com/d3m-purdue/modsquad2.git

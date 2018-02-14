@@ -1,17 +1,32 @@
 setConfig:
   - config
 
-setProblemList:
-  - problems
+setProblemTaskType:
+  - tasktype
+
+setProblemTaskSubType:
+  - tasksubtype
+
+setProblemMetrics:
+  - metrics
+
+setProblemId:
+  - problemId
+
+setProblemTargetFeatures:
+  - targets
 
 setActiveData:
   - data
-  - name
-  - path
-  - meta
 
+setDataSchema:
+  - schema
+  
 setVariables:
   - variables
+
+setVariableMetadata:
+  - metadata
 
 createLogVariable:
   - name
@@ -51,4 +66,12 @@ addPipeline:
   - id
   - resultURI
   - score
+
+addExecutedPipeline:
+  - id
+  - resultURI
   - response
+
+addExecutedPipelineData:
+  - id
+  - data
