@@ -1,4 +1,4 @@
-# d3m-ta3-modeling
+# purdue-ta3-main
 
 A prototype TA3 application enabling a hypothetical modeling task. This repository includes the new React-based interface! 
 
