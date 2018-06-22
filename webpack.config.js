@@ -1,11 +1,10 @@
 var path = require('path');
 
 var webpack = require('webpack');
-var candelaLoaders = require('candela/webpack');
 var HtmlPlugin = require('html-webpack-plugin');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 
-module.exports = candelaLoaders({
+module.exports = {
   devtool: 'cheap-module-eval-source-map',
   entry: {
     index: './src/index.js'
@@ -86,4 +85,4 @@ module.exports = candelaLoaders({
       { from: 'src/tangelo/image.py', to: 'image.py' }
     ])
   ]
-});
+};

@@ -1,6 +1,5 @@
-import ScatterPlot from 'candela/plugins/vega/ScatterPlot';
-import Histogram from 'candela/plugins/vega/Histogram';
-import InitSize from 'candela/plugins/mixin/InitSize';
+import { ScatterPlot, Histogram } from '@candela/vega';
+import { InitSize } from '@candela/size';
 
 const sq = (x) => x * x;
 
