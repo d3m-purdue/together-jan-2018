@@ -1,6 +1,5 @@
 import 'bootstrap/dist/js/bootstrap';
-import ScatterPlot from 'candela/plugins/vega/ScatterPlot';
-import BoxPlot from 'candela/plugins/vega/BoxPlot';
+import { ScatterPlot, BoxPlot } from '@candela/vega';
 import { select,
          selectAll } from 'd3-selection';
 import { json } from 'd3-request';

@@ -1,5 +1,5 @@
 import { select } from 'd3-selection';
-import VisComponent from 'candela/VisComponent';
+import { VisComponent } from '@candela/core';
 
 import content from './index.jade';
 
