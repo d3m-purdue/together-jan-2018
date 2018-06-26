@@ -195,7 +195,13 @@ def createPipeline(data_uri=None):
   resp = stub.SearchSolutions(req)
 
   # return map(lambda x: json.loads(MessageToJson(x)), resp)
-  search_result = json.loads(MessageToJson(resp))
+  search_id = json.loads(MessageToJson(resp))
+
+  # Get actual pipelines.
+  req = core_pb2.GetSearchSolutionsResultsRequest(search_id=search_id['searchId'])
+  results = stub.GetSearchSolutionsResults(req)
+
+  return map(lambda x: json.loads(MessageToJson(x)), results)
 
 def pipelineCreateResults(context=None, pipeline=None, data_uri=None):
     stub = get_stub()
