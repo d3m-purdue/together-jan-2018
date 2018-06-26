@@ -54,16 +54,16 @@ def getProblems():
     problem_supply = d3mds.D3MProblem(problem_schema_path)
     targets = problem_supply.get_targets()
     metrics = problem_supply.get_performance_metrics()
-    taskType = problem_supply.get_taskType()
-    subType =  problem_supply.get_taskSubType()
-    targets = problem_supply.get_targets()
+    # taskType = problem_supply.get_taskType()
+    # subType =  problem_supply.get_taskSubType()
+    # targets = problem_supply.get_targets()
     problems = []
     problems.append({'problemId': problem_supply.get_problemID(),
                         #'description': problem_supply.get_problemDescription(),
-                        'taskType': taskType,
-                        'taskSubType': subType,
+                        # 'taskType': taskType,
+                        # 'taskSubType': subType,
                          'metrics' : metrics,
-                         'targets': targets
+                         'targets': problem_supply.get_targets()
                          })
 
     return problems

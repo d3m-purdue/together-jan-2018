@@ -22,7 +22,7 @@ class D3MDataset:
 
 		# read the schema in dsHome
 		_dsDoc = os.path.join(self.dsHome, 'datasetDoc.json')
-		assert os.path.exists(_dsDoc)
+                assert os.path.exists(_dsDoc)
 		with open(_dsDoc, 'r') as f:
 			self.dsDoc = json.load(f)
 
@@ -199,6 +199,12 @@ class D3MProblem:
 		# locate the splitsFile
 		self.splitsFile = self._get_datasplits_file()
 
+        def get_taskType(self):
+            return self.prDoc['about']['taskType']
+
+        def get_taskSubType(self):
+            return self.prDoc['about']['taskSubType']
+
 	def get_problemID(self):
 		"""
 		Returns the problemID from problemDoc
@@ -211,12 +217,6 @@ class D3MProblem:
 		"""
 		return self.prDoc['about']['problemSchemaVersion']
 
-	def get_problemDescription(self):
-		"""
-		Returns the problem schema version that was used to create this dataset
-		"""
-		return self.prDoc['about']['problemDescription']
-
 	def get_datasetID(self):
 		"""
 		Returns the ID of the dataset referenced in the problem 
@@ -228,16 +228,6 @@ class D3MProblem:
 		Looks at the problemDoc and returns the colIndex and colName of the target variable
 		"""
 		return self.prDoc['inputs']['data'][0]['targets']
-
-	# problems have a problem description at the top, but not copied down to the train or test level. 
-	def get_problemDescription(self):
-		return self.prDoc['about']['problemDescription']
-
-	def get_taskType(self):
-		return self.prDoc['about']['taskType']
-
-	def get_taskSubType(self):
-		return self.prDoc['about']['taskSubType']
 
 	def get_datasplits(self, view=None):
 		"""
@@ -331,10 +321,5 @@ class D3MDS:
 
 	def get_test_targets(self):
 		df = self.dataset.get_learning_data(view='test', problem=self.problem)
-		target_cols = self._get_target_columns(df)
-		return np.ravel(df[df.columns[target_cols]])
-
-	def get_problem_targets(self):
-		df = self.problem.get_learning_data(view='test', problem=self.problem)
 		target_cols = self._get_target_columns(df)
 		return np.ravel(df[df.columns[target_cols]])

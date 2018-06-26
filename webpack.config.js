@@ -81,6 +81,14 @@ module.exports = {
       { from: 'src/ta3_quit.py', to: 'ta3_quit.py' },
       { from: 'src/tangelo/core_pb2.py', to: 'core_pb2.py' },
       { from: 'src/tangelo/core_pb2_grpc.py', to: 'core_pb2_grpc.py' },
+      { from: 'src/tangelo/pipeline_pb2.py', to: 'pipeline_pb2.py' },
+      { from: 'src/tangelo/pipeline_pb2_grpc.py', to: 'pipeline_pb2_grpc.py' },
+      { from: 'src/tangelo/primitive_pb2.py', to: 'primitive_pb2.py' },
+      { from: 'src/tangelo/primitive_pb2_grpc.py', to: 'primitive_pb2_grpc.py' },
+      { from: 'src/tangelo/problem_pb2.py', to: 'problem_pb2.py' },
+      { from: 'src/tangelo/problem_pb2_grpc.py', to: 'problem_pb2_grpc.py' },
+      { from: 'src/tangelo/value_pb2.py', to: 'value_pb2.py' },
+      { from: 'src/tangelo/value_pb2_grpc.py', to: 'value_pb2_grpc.py' },
       { from: 'src/tangelo/d3mds.py', to: 'd3mds.py' },
       { from: 'src/tangelo/image.py', to: 'image.py' }
     ])

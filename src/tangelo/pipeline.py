@@ -16,6 +16,8 @@ import core_pb2_grpc as core_pb2_grpc
 import core_pb2 as cpb
 from core_pb2_grpc import CoreStub
 
+import problem_pb2
+import value_pb2
 
 @tangelo.restful
 def post(op='', **kwargs):
@@ -49,70 +51,151 @@ def get_stub():
   stub = core_pb2_grpc.CoreStub(channel)
   return stub
 
+
+def metricLookup(metricString, task_type):
+  # classification metrics
+  if (metricString == 'accuracy'):
+    print 'accuracy metric'
+    return problem_pb2.ACCURACY
+  if (metricString == 'f1'):
+    print 'f1 metric'
+    return problem_pb2.F1
+  if (metricString == 'f1Macro'):
+    print 'f1-macro metric'
+    return problem_pb2.F1_MACRO
+  if (metricString == 'f1Micro'):
+    print 'f1-micro metric'
+    return problem_pb2.F1_MICRO
+  if (metricString == 'ROC_AUC'):
+    print 'roc-auc metric'
+    return problem_pb2.ROC_AUC
+  if (metricString == 'rocAuc'):
+    print 'rocAuc metric'
+    return problem_pb2.ROC_AUC
+  if (metricString == 'rocAucMicro'):
+    print 'roc-auc-micro metric'
+    return problem_pb2.ROC_AUC_MICRO
+  if (metricString == 'rocAucMacro'):
+    print 'roc-auc-macro metric'
+    return problem_pb2.ROC_AUC_MACRO
+  # clustering
+  if (metricString == 'normalizedMutualInformation'):
+    print 'normalized mutual information metric'
+    return problem_pb2.NORMALIZED_MUTUAL_INFORMATION
+  if (metricString == 'jaccardSimilarityScore'):
+    print 'jaccard similarity metric'
+    return problem_pb2.JACCARD_SIMILARITY_SCORE
+  # regression
+  if (metricString == 'meanSquaredError'):
+    print 'MSE metric'
+    return problem_pb2.MEAN_SQUARED_ERROR
+  if (metricString == 'rootMeanSquaredError'):
+    print 'RMSE metric'
+    return problem_pb2.ROOT_MEAN_SQUARED_ERROR
+  if (metricString == 'rootMeanSquaredErrorAvg'):
+    print 'RMSE Average metric'
+    return problem_pb2.ROOT_MEAN_SQUARED_ERROR_AVG
+  if (metricString == 'rSquared'):
+    print 'rSquared metric'
+    return problem_pb2.R_SQUARED
+  if (metricString == 'meanAbsoluteError'):
+    print 'meanAbsoluteError metric'
+    return problem_pb2.MEAN_ABSOLUTE_ERROR
+  # we don't recognize the metric, assign a value to the unknown metric according to the task type. 
+  else:
+    print 'undefined metric received, so assigning a metric according to the task type'
+    if task_type==problem_pb2.CLASSIFICATION:
+      print 'classification: assigning f1Macro'
+      return problem_pb2.F1_MACRO
+    elif task_type==problem_pb2.CLUSTERING:
+      print 'clustering: assigning normalized mutual information'
+      return problem_pb2.NORMALIZED_MUTUAL_INFORMATION
+    else:
+      print 'regression: assigning RMSE'
+      return problem_pb2.ROOT_MEAN_SQUARED_ERROR
+
+def make_target(spec):
+    return problem_pb2.ProblemTarget(
+            target_index = spec['targetIndex'],
+            resource_id = spec['resID'],
+            column_index = spec['colIndex'],
+            column_name = spec['colName'])
+
 def taskTypeLookup(task):
   if (task=='classification'):
     print 'detected classification task'
-    return core_pb2.CLASSIFICATION
+    return problem_pb2.CLASSIFICATION
   elif (task == 'clustering'):
     print 'detected clustering task'
-    return core_pb2.CLUSTERING
+    return problem_pb2.CLUSTERING
   else:
     print 'assuming regression'
-    return core_pb2.REGRESSION
+    return problem_pb2.REGRESSION
 
 def subTaskLookup(sub):
   if (sub == 'multiClass'):
     print 'multiClass subtype'
-    return core_pb2.MULTICLASS
+    return problem_pb2.MULTICLASS
   if (sub == 'multivariate'):
-    return core_pb2.MULTIVARIATE
+    return problem_pb2.MULTIVARIATE
   if (sub == 'univariate'):
-    return core_pb2.UNIVARIATE
+    return problem_pb2.UNIVARIATE
   else:
     print 'assuming NONE subtask'
-    return core_pb2.NONE
+    return problem_pb2.NONE
 
 
-def createPipeline(context=None, data_uri=None, task_type=None, task_subtype=None, target_features=None, predict_features=[],metrics=None,max_pipelines=10):
-
+def createPipeline(data_uri=None):
   stub = get_stub()
-  
+
   problem_schema_path = os.environ.get('PROBLEM_ROOT')
   problem_supply = d3mds.D3MProblem(problem_schema_path)
 
+  dataset_schema_path = os.environ.get('TRAINING_DATA_ROOT')
+  dataset_supply = d3mds.D3MDataset(dataset_schema_path)
+
   # get the target features into the record format expected by the API
   targets =  problem_supply.get_targets()
-  features = []
-  for entry in targets:
-    tf = core_pb2.Feature(resource_id=entry['resID'],feature_name=entry['colName'])
-    features.append(tf)
+  # features = []
+  # for entry in targets:
+    # tf = core_pb2.Feature(resource_id=entry['resID'],feature_name=entry['colName'])
+    # features.append(tf)
 
   # we are having trouble parsing the problem specs into valid API specs, so just hardcode
   # to certain problem types for now.  We could fix this with a more general lookup table to return valid API codes
-  task = taskTypeLookup(task_type)
-  tasksubtype = subTaskLookup(task_subtype)
+  # task = taskTypeLookup(task_type)
+  # tasksubtype = subTaskLookup(task_subtype)
 
   # the metrics in the files are imprecise text versions of the enumerations, so just standardize.  A lookup table
   # would help here, too
-  metrics=[core_pb2.F1_MICRO, core_pb2.ROC_AUC, core_pb2.ROOT_MEAN_SQUARED_ERROR, core_pb2.F1, core_pb2.R_SQUARED]
+  # metrics=[core_pb2.F1_MICRO, core_pb2.ROC_AUC, core_pb2.ROOT_MEAN_SQUARED_ERROR, core_pb2.F1, core_pb2.R_SQUARED]
 
-  context_in = cpb.SessionContext(session_id=context)
+  # context_in = cpb.SessionContext(session_id=context)
 
-  request_in =  cpb.PipelineCreateRequest(context=context_in,
-                                                          dataset_uri=data_uri,
-                                                          task=task,
-                                                          task_subtype=tasksubtype,
-                                                          metrics=metrics,
-                                                          task_description='Modsquad pipeline create request',
-                                                          target_features=features,                                                       
-                                                          predict_features=[],
-                                                          max_pipelines=10)
-  resp = stub.CreatePipelines(request_in)
+  # problem_pb = Parse(json.dumps(problem_supply.prDoc), problem_pb2.ProblemDescription(), ignore_unknown_fields=True)
+  problem = problem_pb2.Problem(
+    id = problem_supply.get_problemID(),
+    version = problem_supply.get_problemSchemaVersion(),
+    name = 'modsquad_problem',
+    description = 'amaaaazing problem',
+    task_type = taskTypeLookup(problem_supply.get_taskType()),
+    task_subtype = subTaskLookup(problem_supply.get_taskSubType()),
+    performance_metrics = map(lambda x: problem_pb2.ProblemPerformanceMetric(metric=metricLookup(x['metric'], problem_supply.get_taskType())), problem_supply.get_performance_metrics()))
 
-  return map(lambda x: json.loads(MessageToJson(x)), resp)
+  value = value_pb2.Value(dataset_uri=data_uri)
+  req = core_pb2.SearchSolutionsRequest(
+          user_agent='modsquad',
+          version="2018.6.2",
+          problem=problem_pb2.ProblemDescription(
+              problem=problem,
+              inputs=[problem_pb2.ProblemInput(
+                  dataset_id=dataset_supply.get_datasetID(),
+                  targets=map(make_target, problem_supply.get_targets()))]),
+          inputs=[value])
+  resp = stub.SearchSolutions(req)
 
-
-
+  # return map(lambda x: json.loads(MessageToJson(x)), resp)
+  search_result = json.loads(MessageToJson(resp))
 
 def pipelineCreateResults(context=None, pipeline=None, data_uri=None):
     stub = get_stub()
@@ -123,7 +206,7 @@ def pipelineCreateResults(context=None, pipeline=None, data_uri=None):
 
     context_in = cpb.SessionContext(session_id=context)
 
-    request_in = cpb.PipelineCreateResultsRequest(context=context_in,                      
+    request_in = cpb.PipelineCreateResultsRequest(context=context_in,
                                                   pipeline_id=pipeline)
     resp = stub.GetCreatePipelineResults(request_in)
     return map(lambda x: json.loads(MessageToJson(x)), resp)

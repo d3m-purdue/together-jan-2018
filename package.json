@@ -8,7 +8,7 @@
     "build": "webpack",
     "pythonprep": "virtualenv venv && ./venv/bin/pip install -r requirements.txt && ./venv/bin/pip install --no-build-isolation pandas==0.22.0",
     "rprep": "mkdir -p rlib && Rscript script/prep.R",
-    "protobuf": "./venv/bin/python -m grpc_tools.protoc -I proto --python_out=src/tangelo --grpc_python_out=src/tangelo core.proto",
+    "protobuf": "./venv/bin/python -m grpc_tools.protoc -I proto --python_out=src/tangelo --grpc_python_out=src/tangelo core.proto pipeline.proto primitive.proto problem.proto value.proto",
     "watch": "webpack -w",
     "lint": "semistandard | snazzy",
     "serve": "R_LIBS_SITE=$PWD/rlib:$R_LIBS_SITE  ./venv/bin/tangelo  -np --host 0.0.0.0 --root build --port ${PORT-8080}",

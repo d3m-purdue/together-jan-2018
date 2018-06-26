@@ -5,7 +5,7 @@
 
 - name: BlindPaired
   display: Connect to Model (TA2)
-  port: 45042
+  port: 50051
   description: This is the open slot for any program TA2 to be paired with ModSquad
 
 #- name: Columbia

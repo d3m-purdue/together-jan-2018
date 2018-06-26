@@ -25,7 +25,6 @@ def post(port=None):
 	channel = grpc.insecure_channel(server_channel_address)
 	stub = core_pb2_grpc.CoreStub(channel)
 
-	resp = stub.StartSession(core_pb2.SessionRequest(user_agent='modsquad',
-                                                version=version))
+	resp = stub.Hello(core_pb2.HelloRequest())
 
 	return MessageToJson(resp)
