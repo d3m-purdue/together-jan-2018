@@ -9,6 +9,7 @@ import os
 import d3mds
 import csv
 import shutil
+import pprint
 
 import core_pb2 as core_pb2
 import core_pb2_grpc as core_pb2_grpc
@@ -195,13 +196,16 @@ def createPipeline(data_uri=None):
   resp = stub.SearchSolutions(req)
 
   # return map(lambda x: json.loads(MessageToJson(x)), resp)
-  search_id = json.loads(MessageToJson(resp))
+  search_id = json.loads(MessageToJson(resp))['searchId']
 
   # Get actual pipelines.
-  req = core_pb2.GetSearchSolutionsResultsRequest(search_id=search_id['searchId'])
+  req = core_pb2.GetSearchSolutionsResultsRequest(search_id=search_id)
   results = stub.GetSearchSolutionsResults(req)
+  results = map(lambda x: json.loads(MessageToJson(x)), results)
 
-  return map(lambda x: json.loads(MessageToJson(x)), results)
+  stub.StopSearchSolutions(core_pb2.StopSearchSolutionsRequest(search_id=search_id))
+
+  return results
 
 def pipelineCreateResults(context=None, pipeline=None, data_uri=None):
     stub = get_stub()
@@ -227,17 +231,29 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     if data_uri[0:4] != 'file':
       data_uri = 'file://%s' % (data_uri)
 
-    context_in = cpb.SessionContext(session_id=context)
+    # context_in = cpb.SessionContext(session_id=context)
 
-    request_in = cpb.PipelineExecuteRequest(context=context_in,                      
-                                            pipeline_id=pipeline,
-                                            dataset_uri=data_uri)
-    resp = stub.ExecutePipeline(request_in)
+    input = value_pb2.Value(dataset_uri=data_uri)
+    request_in = cpb.FitSolutionRequest(solution_id=pipeline,
+                                        inputs=[input])
+    resp = MessageToJson(stub.FitSolution(request_in))
 
-    executedPipes =  map(lambda x: json.loads(MessageToJson(x)), resp)
-    print executedPipes
+    # print resp
+
+    fittedPipes = stub.GetFitSolutionResults(core_pb2.GetFitSolutionResultsRequest(request_id=resp))
+    fittedPipes = map(lambda x: json.loads(MessageToJson(x)), fittedPipes)
+    for f in fittedPipes:
+        f['fittedSolutionId'] = json.loads(f['fittedSolutionId'])
+
+    pprint.pprint(fittedPipes)
+
+    executedPipes = map(lambda x: stub.ProduceSolution(core_pb2.ProduceSolutionRequest(fitted_solution_id=x['fittedSolutionId']['requestId'], inputs=[input])), fittedPipes)
+    pprint.pprint(map(MessageToJson, executedPipes))
+
+    executedPipes = map(lambda x: json.loads(MessageToJson(x)), resp)
+    pprint.pprint(executedPipes)
     # now loop through the returned pipelines and copy their data
-    map(lambda x: copyToWebRoot(x), executedPipes)
+    # map(lambda x: copyToWebRoot(x), executedPipes)
     return executedPipes
 
 
