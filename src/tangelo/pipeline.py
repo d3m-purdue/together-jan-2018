@@ -187,6 +187,7 @@ def createPipeline(data_uri=None):
   req = core_pb2.SearchSolutionsRequest(
           user_agent='modsquad',
           version="2018.6.2",
+          time_bound=1,
           problem=problem_pb2.ProblemDescription(
               problem=problem,
               inputs=[problem_pb2.ProblemInput(
@@ -236,25 +237,53 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     input = value_pb2.Value(dataset_uri=data_uri)
     request_in = cpb.FitSolutionRequest(solution_id=pipeline,
                                         inputs=[input])
-    resp = MessageToJson(stub.FitSolution(request_in))
+    resp = stub.FitSolution(request_in)
 
-    # print resp
+    resp = json.loads(MessageToJson(resp))
+    pprint.pprint(resp)
 
-    fittedPipes = stub.GetFitSolutionResults(core_pb2.GetFitSolutionResultsRequest(request_id=resp))
-    fittedPipes = map(lambda x: json.loads(MessageToJson(x)), fittedPipes)
+    fittedPipes = stub.GetFitSolutionResults(core_pb2.GetFitSolutionResultsRequest(request_id=resp['requestId']))
+    # print list(fittedPipes)
+    # fittedPipes = map(lambda x: MessageToJson(x), fittedPipes)
+    # for f in fittedPipes:
+        # f['fittedSolutionId'] = json.loads(f['fittedSolutionId'])
+
+    fittedPipes = list(fittedPipes)
+    # map(pprint.pprint, fittedPipes)
+    # map(lambda x: pprint.pprint(MessageToJson(x)), fittedPipes)
+
+    pipes = []
     for f in fittedPipes:
-        f['fittedSolutionId'] = json.loads(f['fittedSolutionId'])
+        # f = json.loads(MessageToJson(f))
+        pprint.pprint(f)
 
-    pprint.pprint(fittedPipes)
+        pipes.append(json.loads(MessageToJson(f)))
 
-    executedPipes = map(lambda x: stub.ProduceSolution(core_pb2.ProduceSolutionRequest(fitted_solution_id=x['fittedSolutionId']['requestId'], inputs=[input])), fittedPipes)
-    pprint.pprint(map(MessageToJson, executedPipes))
+    executedPipes = map(lambda x: stub.ProduceSolution(core_pb2.ProduceSolutionRequest(
+        fitted_solution_id=x['fittedSolutionId'],
+        inputs=[input])), filter(lambda x: x['progress']['state'] == 'COMPLETED', pipes))
 
-    executedPipes = map(lambda x: json.loads(MessageToJson(x)), resp)
+    # executedPipes = map(lambda x: json.loads(MessageToJson(x)), executedPipes)
+
     pprint.pprint(executedPipes)
+
+    results = map(lambda x: stub.GetProduceSolutionResults(core_pb2.GetProduceSolutionResultsRequest(request_id=x.request_id)), executedPipes)
+
+    pprint.pprint(results)
+    exposed = []
+    for r in results:
+        for rr in r:
+            pprint.pprint(rr)
+            pprint.pprint(MessageToJson(rr))
+
+            exposed.append(json.loads(MessageToJson(rr)))
+
+    exposed = filter(lambda x: x['progress']['state'] == 'COMPLETED', exposed)
+    pprint.pprint(exposed)
+
     # now loop through the returned pipelines and copy their data
-    # map(lambda x: copyToWebRoot(x), executedPipes)
-    return executedPipes
+
+    return exposed
 
 
 # read the CSV written out as the predicted result of a pipeline and return it as 
