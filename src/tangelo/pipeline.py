@@ -273,8 +273,8 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     exposed = []
     for r in results:
         for rr in r:
-            pprint.pprint(rr)
-            pprint.pprint(MessageToJson(rr))
+            #pprint.pprint(rr)
+            #pprint.pprint(MessageToJson(rr))
 
             exposed.append(json.loads(MessageToJson(rr)))
 
@@ -282,7 +282,7 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     pprint.pprint(exposed)
 
     # now loop through the returned pipelines and copy their data
-
+    map(lambda x: copyToWebRoot(x), exposed)
     return exposed
 
 
@@ -290,7 +290,7 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
 # a list of json dictionaries
 def copyToWebRoot(returnRec=None):
     
-    resultURI = returnRec['resultUri']
+    resultURI = returnRec['exposedOutputs']['outputs.0']['csvUri']
     print 'copying pipelineURI:',resultURI
     if resultURI is None:
         tangelo.http_status(500)
