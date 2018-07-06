@@ -52,7 +52,8 @@ class D3MDataset:
 		If view is 'TRAIN' or 'TEST', then the full learningData is filtered to return learningData only for that view.
 		For view-based filtering, the problem object has to be passed because this method used the splitsData from the problem.
 		"""
-		df = pd.read_csv(self.learningDataFile, index_col='d3mIndex')
+		#df = pd.read_csv(self.learningDataFile, index_col='d3mIndex')
+		df = pd.read_csv(self.learningDataFile)
 
 		if view is None:
 			return df
