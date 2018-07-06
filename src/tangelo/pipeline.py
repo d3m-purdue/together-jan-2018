@@ -21,6 +21,14 @@ import problem_pb2
 import value_pb2
 
 @tangelo.restful
+def get(op='',**kwargs):
+  if op == 'results':
+    return serveDataFromLocation(**kwargs)
+  else:
+     tangelo.http_status(404)
+
+
+@tangelo.restful
 def post(op='', **kwargs):
     if op == '':
         return createPipeline(**kwargs)
@@ -250,7 +258,8 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
 
     fittedPipes = list(fittedPipes)
     # map(pprint.pprint, fittedPipes)
-    # map(lambda x: pprint.pprint(MessageToJson(x)), fittedPipes)
+    print 'fitted pipes:'
+    map(lambda x: pprint.pprint(MessageToJson(x)), fittedPipes)
 
     pipes = []
     for f in fittedPipes:
@@ -264,7 +273,7 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
         inputs=[input])), filter(lambda x: x['progress']['state'] == 'COMPLETED', pipes))
 
     # executedPipes = map(lambda x: json.loads(MessageToJson(x)), executedPipes)
-
+    print 'executed pipes:'
     pprint.pprint(executedPipes)
 
     results = map(lambda x: stub.GetProduceSolutionResults(core_pb2.GetProduceSolutionResultsRequest(request_id=x.request_id)), executedPipes)
@@ -273,16 +282,17 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     exposed = []
     for r in results:
         for rr in r:
-            pprint.pprint(rr)
-            pprint.pprint(MessageToJson(rr))
+            #pprint.pprint(rr)
+            #pprint.pprint(MessageToJson(rr))
 
             exposed.append(json.loads(MessageToJson(rr)))
 
     exposed = filter(lambda x: x['progress']['state'] == 'COMPLETED', exposed)
     pprint.pprint(exposed)
 
-    # now loop through the returned pipelines and copy their data
-
+    # the loop through the returned pipelines to copy their data
+    # is not used anymore. Tngelo 
+    #map(lambda x: copyToWebRoot(x), exposed)
     return exposed
 
 
@@ -290,7 +300,7 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
 # a list of json dictionaries
 def copyToWebRoot(returnRec=None):
     
-    resultURI = returnRec['resultUri']
+    resultURI = returnRec['exposedOutputs']['outputs.0']['csvUri']
     print 'copying pipelineURI:',resultURI
     if resultURI is None:
         tangelo.http_status(500)
@@ -304,6 +314,23 @@ def copyToWebRoot(returnRec=None):
     print 'copy completed'
 
     return resultURI
+
+
+# read the CSV written out as the predicted result of a pipeline and return it as 
+# a list of json dictionaries
+def serveDataFromLocation(resultURI=None):
+    
+    print 'copying pipelineURI:',resultURI
+    if resultURI is None:
+        tangelo.http_status(500)
+        return {'error': 'no resultURI for executed pipeline'}
+    if resultURI[0:7] == 'file://':
+        resultURI = resultURI[7:]
+    
+    # copy the results file under the webroot so it can be read by
+    # javascript without having cross origin problems
+    with open(resultURI,'r') as f:
+      return f.read()
 
 
 
