@@ -268,6 +268,9 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
 
         pipes.append(json.loads(MessageToJson(f)))
 
+    fitted_solution_id = map(lambda x: x['fittedSolutionId'],filter(lambda x: x['progress']['state'] == 'COMPLETED', pipes))
+    print 'fitted_solution_id', fitted_solution_id
+
     executedPipes = map(lambda x: stub.ProduceSolution(core_pb2.ProduceSolutionRequest(
         fitted_solution_id=x['fittedSolutionId'],
         inputs=[input])), filter(lambda x: x['progress']['state'] == 'COMPLETED', pipes))
@@ -278,6 +281,7 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
 
     results = map(lambda x: stub.GetProduceSolutionResults(core_pb2.GetProduceSolutionResultsRequest(request_id=x.request_id)), executedPipes)
 
+    print 'results is:'
     pprint.pprint(results)
     exposed = []
     for r in results:
@@ -293,7 +297,8 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     # the loop through the returned pipelines to copy their data
     # is not used anymore. Tngelo 
     #map(lambda x: copyToWebRoot(x), exposed)
-    return exposed
+    return {'exposed': exposed, 'fitted_solution_id':fitted_solution_id}
+    # magic saved here: return [{exposed: v[0], fitted_id: v[1]} for v in zip(exposed, fitted_solution_id)] 
 
 
 # read the CSV written out as the predicted result of a pipeline and return it as 
