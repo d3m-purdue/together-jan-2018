@@ -194,7 +194,7 @@ def createPipeline(data_uri=None):
   value = value_pb2.Value(dataset_uri=data_uri)
   req = core_pb2.SearchSolutionsRequest(
           user_agent='modsquad',
-          version="2018.6.2",
+          version="2018.7.7",
           time_bound=1,
           problem=problem_pb2.ProblemDescription(
               problem=problem,
@@ -203,6 +203,7 @@ def createPipeline(data_uri=None):
                   targets=map(make_target, problem_supply.get_targets()))]),
           inputs=[value])
   resp = stub.SearchSolutions(req)
+  print 'Kludge: using hard-coded version 2018.7.7 of the API. Should pull from the proto files instead'
 
   # return map(lambda x: json.loads(MessageToJson(x)), resp)
   search_id = json.loads(MessageToJson(resp))['searchId']
@@ -264,8 +265,7 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     pipes = []
     for f in fittedPipes:
         # f = json.loads(MessageToJson(f))
-        pprint.pprint(f)
-
+        #pprint.pprint(f)
         pipes.append(json.loads(MessageToJson(f)))
 
     fitted_solution_id = map(lambda x: x['fittedSolutionId'],filter(lambda x: x['progress']['state'] == 'COMPLETED', pipes))
@@ -276,13 +276,13 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
         inputs=[input])), filter(lambda x: x['progress']['state'] == 'COMPLETED', pipes))
 
     # executedPipes = map(lambda x: json.loads(MessageToJson(x)), executedPipes)
-    print 'executed pipes:'
-    pprint.pprint(executedPipes)
+    #print 'executed pipes:'
+    #pprint.pprint(executedPipes)
 
     results = map(lambda x: stub.GetProduceSolutionResults(core_pb2.GetProduceSolutionResultsRequest(request_id=x.request_id)), executedPipes)
 
-    print 'results is:'
-    pprint.pprint(results)
+    #print 'results is:'
+    #pprint.pprint(results)
     exposed = []
     for r in results:
         for rr in r:
@@ -292,7 +292,7 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
             exposed.append(json.loads(MessageToJson(rr)))
 
     exposed = filter(lambda x: x['progress']['state'] == 'COMPLETED', exposed)
-    pprint.pprint(exposed)
+    #pprint.pprint(exposed)
 
     # the loop through the returned pipelines to copy their data
     # is not used anymore. Tngelo 
@@ -335,21 +335,38 @@ def serveDataFromLocation(resultURI=None):
     # copy the results file under the webroot so it can be read by
     # javascript without having cross origin problems
     with open(resultURI,'r') as f:
-      return f.read()
+      content = f.read()
+      f.close()
+      return content
+
+# this is a global variable used by the method below.  It represents the
+# "ranking" value of solutions selected by the user.  rank=1 is the highest, with
+# successive rankings (2,3,etc.) corresponding to lower quality model fits
+globalNextRankToUse = 1
 
 
-
-def exportPipeline(context=None, pipeline=None):
+# send a message to the modeling engine that the user has chosen to output
+# a solution.  The fiddedID is passed as the pipeline argument in the call. The 
+# caller can optionally overload 
+def exportPipeline(context=None, pipeline=None, rankInput=None):
+    global globalNextRankToUse
     stub = get_stub()
-    context_in = cpb.SessionContext(session_id=context)
 
-    # be sure to make a URI that matches where the TA2 will be able to write out during execution
-    executables_root = os.environ.get('EXECUTABLES_ROOT')
-    exec_name = '%s/modsquad-%s-%s-%f.executable' % (executables_root, context, pipeline, time.time())
-    exec_uri = 'file://%s' % (exec_name)
+    # if there was a rank input to this call, use that rank, otherwise 
+    # increment a global ranked value each time this method is called.
+    # This way, successfive exports will have increasing rank numbers (1,2,3,etc.)
+    if rankInput:
+      rankToOutput = int(rankInput)
+      globalNextRankToUse = rankInput + 1
+    else:
+      rankToOutput = int(globalNextRankToUse)
+      # increment the global counter so the next use will have a higher rank
+      globalNextRankToUse += 1
 
-    resp = stub.ExportPipeline(cpb.PipelineExportRequest(context=context_in,
-                                                         pipeline_id=pipeline,
-                                                         pipeline_exec_uri=exec_uri))
+    request_in = cpb.SolutionExportRequest(fitted_solution_id=pipeline,
+                                        rank=int(rankToOutput))
+
+    print 'requesting solution export:', request_in
+    resp = stub.SolutionExport(request_in)
 
     return json.loads(MessageToJson(resp))
