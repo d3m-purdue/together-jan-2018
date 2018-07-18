@@ -110,7 +110,7 @@ def metricLookup(metricString, task_type):
   if (metricString == 'meanAbsoluteError'):
     print 'meanAbsoluteError metric'
     return problem_pb2.MEAN_ABSOLUTE_ERROR
-  # we don't recognize the metric, assign a value to the unknown metric according to the task type. 
+  # we don't recognize the metric, assign a value to the unknown metric according to the task type.
   else:
     print 'undefined metric received, so assigning a metric according to the task type'
     if task_type==problem_pb2.CLASSIFICATION:
@@ -295,16 +295,16 @@ def executePipeline(context=None, pipeline=None, data_uri=None):
     #pprint.pprint(exposed)
 
     # the loop through the returned pipelines to copy their data
-    # is not used anymore. Tngelo 
+    # is not used anymore. Tngelo
     #map(lambda x: copyToWebRoot(x), exposed)
     return {'exposed': exposed, 'fitted_solution_id':fitted_solution_id}
-    # magic saved here: return [{exposed: v[0], fitted_id: v[1]} for v in zip(exposed, fitted_solution_id)] 
+    # magic saved here: return [{exposed: v[0], fitted_id: v[1]} for v in zip(exposed, fitted_solution_id)]
 
 
-# read the CSV written out as the predicted result of a pipeline and return it as 
+# read the CSV written out as the predicted result of a pipeline and return it as
 # a list of json dictionaries
 def copyToWebRoot(returnRec=None):
-    
+
     resultURI = returnRec['exposedOutputs']['outputs.0']['csvUri']
     print 'copying pipelineURI:',resultURI
     if resultURI is None:
@@ -312,7 +312,7 @@ def copyToWebRoot(returnRec=None):
         return {'error': 'no resultURI for executed pipeline'}
     if resultURI[0:7] == 'file://':
         resultURI = resultURI[7:]
-    
+
     # copy the results file under the webroot so it can be read by
     # javascript without having cross origin problems
     shutil.copy(resultURI,'pipelines')
@@ -321,17 +321,17 @@ def copyToWebRoot(returnRec=None):
     return resultURI
 
 
-# read the CSV written out as the predicted result of a pipeline and return it as 
+# read the CSV written out as the predicted result of a pipeline and return it as
 # a list of json dictionaries
 def serveDataFromLocation(resultURI=None):
-    
+
     print 'copying pipelineURI:',resultURI
     if resultURI is None:
         tangelo.http_status(500)
         return {'error': 'no resultURI for executed pipeline'}
     if resultURI[0:7] == 'file://':
         resultURI = resultURI[7:]
-    
+
     # copy the results file under the webroot so it can be read by
     # javascript without having cross origin problems
     with open(resultURI,'r') as f:
@@ -346,13 +346,13 @@ globalNextRankToUse = 1
 
 
 # send a message to the modeling engine that the user has chosen to output
-# a solution.  The fiddedID is passed as the pipeline argument in the call. The 
-# caller can optionally overload 
+# a solution.  The fiddedID is passed as the pipeline argument in the call. The
+# caller can optionally overload
 def exportPipeline(context=None, pipeline=None, rankInput=None):
     global globalNextRankToUse
     stub = get_stub()
 
-    # if there was a rank input to this call, use that rank, otherwise 
+    # if there was a rank input to this call, use that rank, otherwise
     # increment a global ranked value each time this method is called.
     # This way, successfive exports will have increasing rank numbers (1,2,3,etc.)
     if rankInput:

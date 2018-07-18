@@ -9,10 +9,14 @@ import sys
 
 
 @tangelo.restful
-def post(mediafile=None,targetHeight=512,*args,**kwargs):
+def get(mediafile=None,targetHeight=512,*args,**kwargs):
     # get the protocol versio
 
     dataset_path = os.environ.get('TRAINING_DATA_ROOT')
+
+    # print 'dataset_path: ', dataset_path
+    # print 'mediafile: ', mediafile
+
     media_file_path = dataset_path+'/media/'+mediafile
     print 'reading media file:',media_file_path
     sys.stdout.flush()
@@ -33,8 +37,10 @@ def post(mediafile=None,targetHeight=512,*args,**kwargs):
 
         buffer = cStringIO.StringIO()
         im.save(buffer, format="JPEG")
-        img_str = base64.b64encode(buffer.getvalue())
+        # img_str = base64.b64encode(buffer.getvalue())
+        img_str = buffer.getvalue()
 
+        tangelo.content_type('image/jpeg')
         return img_str
-    #except: 
+    #except:
     #    return {'status':'failure','mediafile':mediafile}
