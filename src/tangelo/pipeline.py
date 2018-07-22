@@ -153,8 +153,9 @@ def subTaskLookup(sub):
     print 'assuming NONE subtask'
     return problem_pb2.NONE
 
-
-def createPipeline(data_uri=None):
+# called to start a search for solutions to this problem.  The URI is passed so it can 
+# be sent to the TA2 (changed first, if necessary)
+def createPipeline(data_uri=None,time_limit=1):
   stub = get_stub()
 
   problem_schema_path = os.environ.get('PROBLEM_ROOT')
@@ -182,6 +183,11 @@ def createPipeline(data_uri=None):
   # context_in = cpb.SessionContext(session_id=context)
 
   # problem_pb = Parse(json.dumps(problem_supply.prDoc), problem_pb2.ProblemDescription(), ignore_unknown_fields=True)
+
+  # currently HTTP timeout occurs after 2 minutes (probably from , so clamp this value to 2 minutes temporarily)
+  print 'clamping search time to 2 minutes to avoid timeouts'
+  time_limit = min(2,int(time_limit))
+  
   problem = problem_pb2.Problem(
     id = problem_supply.get_problemID(),
     version = problem_supply.get_problemSchemaVersion(),
@@ -194,8 +200,9 @@ def createPipeline(data_uri=None):
   value = value_pb2.Value(dataset_uri=data_uri)
   req = core_pb2.SearchSolutionsRequest(
           user_agent='modsquad',
+          #version=core_pb2.protcol_version,
           version="2018.7.7",
-          time_bound=1,
+          time_bound=int(time_limit),
           problem=problem_pb2.ProblemDescription(
               problem=problem,
               inputs=[problem_pb2.ProblemInput(
@@ -203,7 +210,8 @@ def createPipeline(data_uri=None):
                   targets=map(make_target, problem_supply.get_targets()))]),
           inputs=[value])
   resp = stub.SearchSolutions(req)
-  print 'Kludge: using hard-coded version 2018.7.7 of the API. Should pull from the proto files instead'
+  print 'set time bound to be: ',time_limit,' minutes'
+  print 'using hard-coded version 2018.7.7 of the API. Should pull from the proto files instead'
 
   # return map(lambda x: json.loads(MessageToJson(x)), resp)
   search_id = json.loads(MessageToJson(resp))['searchId']
