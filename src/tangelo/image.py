@@ -32,8 +32,10 @@ def get(mediafile=None,targetHeight=512,bbox=None,*args,**kwargs):
         # before we resize.  Uncomment the line below to force a box render
         #bbox = [112,69,218,346]
         if bbox != None:
+            bbox2 = bbox.split(",")
+            bbox3 = [int(i) for i in bbox2]
             draw = ImageDraw.Draw(im)
-            draw.rectangle(bbox,outline=(255,255,255,64))
+            draw.rectangle(bbox3,outline=(255,255,255,64))
             del draw
 
 
