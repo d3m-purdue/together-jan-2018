@@ -2,14 +2,14 @@
 import json
 import os
 import tangelo
-from PIL import ImageFilter, Image
+from PIL import ImageFilter, Image, ImageDraw
 import base64
 import cStringIO
 import sys
 
 
 @tangelo.restful
-def get(mediafile=None,targetHeight=512,*args,**kwargs):
+def get(mediafile=None,targetHeight=512,bbox=None,*args,**kwargs):
     # get the protocol versio
 
     dataset_path = os.environ.get('TRAINING_DATA_ROOT')
@@ -27,6 +27,15 @@ def get(mediafile=None,targetHeight=512,*args,**kwargs):
 
         width = im.width
         height = im.height
+
+        # if a bbox is set, draw the bbox on the image here
+        # before we resize.  Uncomment the line below to force a box render
+        #bbox = [112,69,218,346]
+        if bbox != None:
+            draw = ImageDraw.Draw(im)
+            draw.rectangle(bbox,outline=(255,255,255,64))
+            del draw
+
 
         factor = float(targetHeight)/float(im.height)
         print('factor:',factor)

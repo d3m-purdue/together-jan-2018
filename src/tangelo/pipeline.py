@@ -185,8 +185,8 @@ def createPipeline(data_uri=None,time_limit=1):
   # problem_pb = Parse(json.dumps(problem_supply.prDoc), problem_pb2.ProblemDescription(), ignore_unknown_fields=True)
 
   # currently HTTP timeout occurs after 2 minutes (probably from , so clamp this value to 2 minutes temporarily)
-  print 'clamping search time to 2 minutes to avoid timeouts'
-  time_limit = min(2,int(time_limit))
+  #print 'clamping search time to 2 minutes to avoid timeouts'
+  #time_limit = min(2,int(time_limit))
   
   problem = problem_pb2.Problem(
     id = problem_supply.get_problemID(),
