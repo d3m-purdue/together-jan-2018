@@ -25,12 +25,13 @@ def run():
         tangelo.http_status(500)
         return {'error': 'Could not parse JSON - %s' % (str(e))}
 
-
-    # make place for executed pipelines to be copied (see pipeline.py copyToWebRoot).
-    # ignore exceptions because directory might exist if rerun on new problems without 
-    # resetting (should only occur on native execution instead of single problem container execution)
+    # clean up the output filesystem to remove any files from old runs
     try:
-        os.mkdir('pipelines')
+        os.system('rm -rf /output/*')
+        os.mkdir('/output/pipelines')
+        os.mkdir('/output/executables')
+        os.mkdir('/output/supporting_files')
+        os.mkdir('/output/predictions')
     except:
         pass
 

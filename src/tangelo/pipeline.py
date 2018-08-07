@@ -10,6 +10,7 @@ import d3mds
 import csv
 import shutil
 import pprint
+import copy
 
 import core_pb2 as core_pb2
 import core_pb2_grpc as core_pb2_grpc
@@ -137,6 +138,9 @@ def taskTypeLookup(task):
   elif (task == 'clustering'):
     print 'detected clustering task'
     return problem_pb2.CLUSTERING
+  elif (task == 'objectDetection'):
+    print 'detected object detection task'
+    return problem_pb2.OBJECT_DETECTION
   else:
     print 'assuming regression'
     return problem_pb2.REGRESSION
@@ -153,16 +157,63 @@ def subTaskLookup(sub):
     print 'assuming NONE subtask'
     return problem_pb2.NONE
 
+
+# process the spec file and generate a new one with any inactive variables not included
+def generate_modified_database_spec(original,modified,inactive):
+  # read the schema in dsHome
+  _dsDoc = os.path.join(original, 'datasetDoc.json')
+  assert os.path.exists(_dsDoc)
+  with open(_dsDoc, 'r') as f:
+    dsDoc = json.load(f)
+    outDoc = {}
+    outDoc['about'] = dsDoc['about']
+    # loop through the resources and add them to the output spec if the feature is not inactive
+    outDoc['dataResources'] = []
+    for resource in dsDoc['dataResources']:
+      # We moved only the dataset spec, update the paths to have an absolute path to the
+      # original content
+      resource['resPath'] = os.path.join(original, resource['resPath'])
+      # pass things besides tables through automatically. tables have a list of features
+      if resource['resType'] != 'table':
+        outDoc['dataResources'].append(resource)
+      else:
+        # if it is a table, copy the header information, but clear out the column names and only
+        # add columns that are not listed in the inactive list.  Inactive entries won't be added. 
+        resourceOut = copy.deepcopy(resource)
+        resourceOut['columns'] = []
+        for column in resource['columns']:
+          if column['colName'] not in inactive:
+            # pass this feature record to the output columns 
+            resourceOut['columns'].append(column)
+        outDoc['dataResources'].append(resourceOut)
+    # now the updated dataset spec will be written out to the write-enabled new location
+    outFileName = os.path.join(modified, 'datasetDoc.json')
+    assert os.path.exists(_dsDoc)
+    with open(outFileName,'w') as outfile:
+      json.dump(outDoc, outfile)
+
+
 # called to start a search for solutions to this problem.  The URI is passed so it can 
 # be sent to the TA2 (changed first, if necessary)
-def createPipeline(data_uri=None,time_limit=1):
+def createPipeline(data_uri=None,inactive=None,time_limit=1):
   stub = get_stub()
 
   problem_schema_path = os.environ.get('PROBLEM_ROOT')
   problem_supply = d3mds.D3MProblem(problem_schema_path)
 
+  # get a pointer to the original dataset description doc
   dataset_schema_path = os.environ.get('TRAINING_DATA_ROOT')
-  dataset_supply = d3mds.D3MDataset(dataset_schema_path)
+
+  # if the user has elected to ignore some variables, then generate a modified spec
+  # and load from the modified spec
+
+  if inactive != None:
+    print 'detected inactive variables:', inactive
+    modified_dataset_schema_path = '/output/supporting_files'
+    generate_modified_database_spec(dataset_schema_path,modified_dataset_schema_path, inactive)
+    dataset_supply = d3mds.D3MDataset(modified_dataset_schema_path)
+  else:
+    dataset_supply = d3mds.D3MDataset(dataset_schema_path)
 
   # get the target features into the record format expected by the API
   targets =  problem_supply.get_targets()
@@ -188,11 +239,12 @@ def createPipeline(data_uri=None,time_limit=1):
   #print 'clamping search time to 2 minutes to avoid timeouts'
   #time_limit = min(2,int(time_limit))
   
+
   problem = problem_pb2.Problem(
     id = problem_supply.get_problemID(),
     version = problem_supply.get_problemSchemaVersion(),
     name = 'modsquad_problem',
-    description = 'amaaaazing problem',
+    description = 'modsquad problem',
     task_type = taskTypeLookup(problem_supply.get_taskType()),
     task_subtype = subTaskLookup(problem_supply.get_taskSubType()),
     performance_metrics = map(lambda x: problem_pb2.ProblemPerformanceMetric(metric=metricLookup(x['metric'], problem_supply.get_taskType())), problem_supply.get_performance_metrics()))

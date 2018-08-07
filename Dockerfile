@@ -12,7 +12,8 @@ RUN apt-get install -y git curl sudo python2.7 python2.7-dev python-pip libcairo
 # (gnupg1 not supported on python:2 base, but needed on r-base)
 
 # add the 'ps' command back
-RUN apt-get -y install procps
+# this was requested by NIS before but isn't strictly necessary
+#RUN apt-get -y install procps
 
 # needed for yarn installation
 RUN apt-get update && apt-get install -y --no-install-recommends apt-utils

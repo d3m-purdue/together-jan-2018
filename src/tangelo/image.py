@@ -33,9 +33,9 @@ def get(mediafile=None,targetHeight=512,bbox=None,*args,**kwargs):
         #bbox = [112,69,218,346]
         if bbox != None:
             bbox2 = bbox.split(",")
-            bbox3 = [int(i) for i in bbox2]
+            bbox3 = [float(i) for i in bbox2]
             draw = ImageDraw.Draw(im)
-            draw.rectangle(bbox3,outline=(255,255,255,64))
+            draw.rectangle(bbox3,outline=(255,255,255))
             del draw
 
 

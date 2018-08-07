@@ -204,7 +204,11 @@ class D3MProblem:
             return self.prDoc['about']['taskType']
 
         def get_taskSubType(self):
-            return self.prDoc['about']['taskSubType']
+        	#print "problem spec:",self.prDoc
+        	if 'taskSubType' in self.prDoc['about']:
+        		return self.prDoc['about']['taskSubType']
+        	else:
+        		return ''
 
 	def get_problemID(self):
 		"""
